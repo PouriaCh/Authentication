@@ -8,8 +8,10 @@ const mongoose = require("mongoose");
 const session = require("express-session");
 const passport = require("passport");
 const passportLocalMongoose = require("passport-local-mongoose");
-const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const findOrCreate = require("mongoose-findorcreate");
+const GoogleStrategy = require("passport-google-oauth20").Strategy;
+const FacebookStrategy = require("passport-facebook");
+const GitHubStrategy = require("passport-github2");
 
 // ###################### defining constants ###################################
 
@@ -25,9 +27,6 @@ app.use(bodyParser.urlencoded({
   extended: true
 }));
 
-// configure passport
-
-
 // ######################### mongoose DB model #################################
 
 mongoose.connect("mongodb://localhost:27017/userDB", {
@@ -38,7 +37,9 @@ mongoose.set("useCreateIndex", true); // to mitigate a deprecation warning
 const userSchema = new mongoose.Schema({
   email: String,
   password: String,
-  googleId: String
+  googleId: String,
+  facebookId: String,
+  githubId: String
 });
 userSchema.plugin(passportLocalMongoose);
 userSchema.plugin(findOrCreate); // findOrCreate
@@ -53,8 +54,10 @@ app.use(session({
 }));
 app.use(passport.initialize());
 app.use(passport.session());
+
 // use static authenticate method of model in LocalStrategy
 passport.use(User.createStrategy());
+
 // use static serialize and deserialize of model for passport session support
 passport.serializeUser(function(user, done) {
   done(null, user.id);
@@ -64,6 +67,7 @@ passport.deserializeUser(function(id, done) {
     done(err, user);
   });
 });
+
 // configure passport for Google Strategy
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
@@ -80,14 +84,43 @@ passport.use(new GoogleStrategy({
   }
 ));
 
-// ########################## Server requests ##################################
+// configure passport for Facebook Strategy
+passport.use(new FacebookStrategy({
+    clientID: process.env.FACEBOOK_APP_ID,
+    clientSecret: process.env.FACEBOOK_APP_SECRET,
+    callbackURL: "http://localhost:3000/auth/facebook/secrets"
+  },
+  function(accessToken, refreshToken, profile, cb) {
+    User.findOrCreate({
+      facebookId: profile.id
+    }, function(err, user) {
+      return cb(err, user);
+    });
+  }
+));
 
-// GET
+// configure passport for Github Strategy
+passport.use(new GitHubStrategy({
+    clientID: process.env.GITHUB_CLIENT_ID,
+    clientSecret: process.env.GITHUB_CLIENT_SECRET,
+    callbackURL: "http://localhost:3000/auth/github/secrets"
+  },
+  function(accessToken, refreshToken, profile, done) {
+    User.findOrCreate({
+      githubId: profile.id
+    }, function(err, user) {
+      return done(err, user);
+    });
+  }
+));
+
+// ############################# GET requests ##################################
 
 app.get("/", function(req, res) {
   res.render("home");
 });
 
+// Google authentication
 app.get("/auth/google",
   passport.authenticate("google", {
     scope: ["profile"]
@@ -99,6 +132,34 @@ app.get("/auth/google/secrets", passport.authenticate("google", {
   }),
   function(req, res) {
     // Successful authentication, redirect to secrets
+    res.redirect("/secrets");
+  });
+
+// Facebook authentication
+app.get("/auth/facebook",
+  passport.authenticate("facebook"));
+
+app.get("/auth/facebook/secrets",
+  passport.authenticate("facebook", {
+    failureRedirect: "/login"
+  }),
+  function(req, res) {
+    // Successful authentication, redirect to secrets.
+    res.redirect("/secrets");
+  });
+
+// Github authentication
+app.get("/auth/github",
+  passport.authenticate("github", {
+    scope: ["user:email"]
+  }));
+
+app.get('/auth/github/secrets',
+  passport.authenticate("github", {
+    failureRedirect: "/login"
+  }),
+  function(req, res) {
+    // Successful authentication, redirect home.
     res.redirect("/secrets");
   });
 
@@ -123,7 +184,7 @@ app.get('/logout', function(req, res) {
   res.redirect('/');
 });
 
-// POST
+// ############################ POST requests ##################################
 
 app.post("/register", function(req, res) {
 
@@ -156,10 +217,9 @@ app.post("/login", function(req, res) {
       });
     }
   });
-
 });
 
-// ######################### Server ###################################
+// ############################### Server ######################################
 
 app.listen(portNumber, function() {
   console.log("Server started on port " + portNumber + ".");
