@@ -23,9 +23,9 @@ This will make sure that you install all the required modules listed in <i>packa
 You need to include Google, Facebook and GitHub strategies for OAuth purposes. Check out the following links:
 
 <ul>
-  <item><a href="http://www.passportjs.org/packages/passport-google-oauth20/">passport-google-oauth20</a></item>
-  <item><a href="http://www.passportjs.org/packages/passport-facebook/">passport-facebook</a></item>
-  <item><a href="http://www.passportjs.org/packages/passport-github2/">passport-github2</a></item>
+  <li><a href="http://www.passportjs.org/packages/passport-google-oauth20/">passport-google-oauth20</a></li>
+  <li><a href="http://www.passportjs.org/packages/passport-facebook/">passport-facebook</a></li>
+  <li><a href="http://www.passportjs.org/packages/passport-github2/">passport-github2</a></li>
 </ul>
 
 Follow the instructions step-by-step according to these links.
@@ -43,4 +43,4 @@ GITHUB_CLIENT_ID=...
 GITHUB_CLIENT_SECRET=...
 ```
 
-Instead of <code>...</code>, insert your own data from the Developer Console of Google, Facebook, and GitHub (without any , or "" or space).
+Instead of <code>...</code>, insert your own data from the Developer Console of Google, Facebook, and GitHub (without any , or "" or space). Make sure your <code>.env</code> is listed inside the <code>.gitignore</code> file in case you want to push your work to GitHub.
