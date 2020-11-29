@@ -1,4 +1,4 @@
-# Secrest
+# Secrets
 Secrets is a Node.js app that allows the users to submit their secrets anonymously! It means your identity would never be revealed to the public and only your secrets will be listed along with everybody else's. Give it a try and let me know!
 
 ## Getting Started
